@@ -22,7 +22,7 @@ ext.url = 'https://github.com/saksmt/dependency-properties-plugin'
 version = '1.0.0'
 description = 'Property file based dependency version management plugin'
 
-if (gradle.startParameter.taskNames.contains("ossrh")) {
+if (gradle.startParameter.taskNames.contains("release")) {
     apply from: file('ossrh-release.gradle')
 }
 
@@ -30,3 +30,5 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
 }
+
+task release() { /* marker task */ }

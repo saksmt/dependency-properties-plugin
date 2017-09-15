@@ -1,11 +1,13 @@
 apply plugin: 'maven'
-apply plugin: 'signing'
 
-if (project.properties['signing.password'] == 'ASK') {
-    char[] data = System.console().readPassword("Enter your gpg-keyring password:")
-    ext['signing.password'] = new String(data)
-    Arrays.fill(data, '\0' as char) // emptying password for security reasons
+ant.input(message: 'Enter your gpg-keyring password: ', addproperty: 'signingPassword') {
+    handler(classname: 'org.apache.tools.ant.input.SecureInputHandler')
 }
+//char[] data = System.console().readPassword("Enter your gpg-keyring password:")
+ext['signing.password'] = ant.properties.signingPassword
+//Arrays.fill(data, '\0' as char) // emptying password for security reasons
+
+apply plugin: 'signing'
 
 task javadocJar(type: Jar) {
     classifier = 'javadoc'
@@ -79,6 +81,12 @@ pluginBundle {
             id = 'run.smt.dependency-properties'
             displayName = project.description
         }
+    }
+
+    mavenCoordinates {
+        groupId = project.group
+        artifactId = project.name
+        version = project.version
     }
 }
 
