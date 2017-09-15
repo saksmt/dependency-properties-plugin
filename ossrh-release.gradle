@@ -1,0 +1,88 @@
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+if (project.properties['signing.password'] == 'ASK') {
+    char[] data = System.console().readPassword("Enter your gpg-keyring password:")
+    ext['signing.password'] = new String(data)
+    Arrays.fill(data, '\0' as char) // emptying password for security reasons
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment ->
+                signing.signPom(deployment)
+            }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: project.properties['ossrh.username'], password: project.properties['ossrh.token'])
+            }
+
+            pom.project {
+                name project.name
+                description project.description
+                packaging 'jar'
+                url project.url
+
+                scm {
+                    connection "scm:git:${project.url}"
+                    developerConnection 'scm:git:git@github.com:saksmt/dependency-properties-plugin'
+                    url project.url
+                }
+
+                licenses {
+                    license {
+                        name 'The MIT License (MIT)'
+                        url 'http://opensource.org/licenses/MIT'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'saksmt'
+                        name = 'Kirill Saksin'
+                        email = 'smt@smt.run'
+                    }
+                }
+            }
+        }
+    }
+}
+
+pluginBundle {
+    website = 'https://github.com/saksmt/dependency-properties-plugin'
+    vcsUrl = 'https://github.com/saksmt/dependency-properties-plugin'
+    description = 'Allows you to store your dependency versions in separate properties file.'
+    tags = ['dependency-management', 'versions', 'versioning']
+
+    plugins {
+        dependencyPropertiesPlugin {
+            id = 'run.smt.dependency-properties'
+            displayName = project.description
+        }
+    }
+}
+
+nexusStaging {
+    username = project.properties['ossrh.username']
+    password = project.properties['ossrh.token']
+}
